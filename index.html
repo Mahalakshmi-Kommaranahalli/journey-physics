@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journey Physics</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #07111f, #102a43);
+      color: white;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    header h1 {
+      font-size: 2.3rem;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #b8c7d9;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #cbd5e1;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      margin-top: 18px;
+      padding: 13px 22px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .start {
+      background: #22c55e;
+      color: white;
+    }
+
+    .reset {
+      background: #ef4444;
+      color: white;
+    }
+
+    .road {
+      height: 180px;
+      background: #263238;
+      border-radius: 15px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 8px solid #111827;
+    }
+
+    .road::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 85px;
+      height: 6px;
+      background: repeating-linear-gradient(
+        to right,
+        white 0 45px,
+        transparent 45px 80px
+      );
+    }
+
+    .vehicle {
+      position: absolute;
+      font-size: 55px;
+      left: 5%;
+      top: 50px;
+      z-index: 2;
+      transition: left 0.1s linear;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.08);
+      border-radius: 15px;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.5rem;
+      margin-top: 7px;
+    }
+
+    .explanation {
+      line-height: 1.7;
+      color: #dbeafe;
+    }
+
+    .footer {
+      text-align: center;
+      color: #94a3b8;
+      margin-top: 25px;
+      font-size: 14px;
+    }
+
+    @media(max-width:650px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      header h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <header>
+    <h1>🚆 Journey Physics</h1>
+    <p>Real-Time Motion Simulator</p>
+  </header>
+
+  <section class="panel">
+
+    <div class="controls">
+
+      <div>
+        <label>Speed (km/h)</label>
+        <input id="speed" type="number" value="60">
+      </div>
+
+      <div>
+        <label>Acceleration (m/s²)</label>
+        <input id="acceleration" type="number" value="1">
+      </div>
+
+    </div>
+
+    <button class="start" onclick="startSimulation()">▶ Start Journey</button>
+    <button class="reset" onclick="resetSimulation()">↻ Reset</button>
+
+  </section>
+
+  <section class="panel">
+
+    <div class="road">
+      <div class="vehicle" id="vehicle">🚌</div>
+    </div>
+
+    <div class="stats">
+
+      <div class="stat">
+        Speed
+        <strong id="speedValue">0 km/h</strong>
+      </div>
+
+      <div class="stat">
+        Distance
+        <strong id="distanceValue">0 m</strong>
+      </div>
+
+      <div class="stat">
+        Time
+        <strong id="timeValue">0 s</strong>
+      </div>
+
+      <div class="stat">
+        Acceleration
+        <strong id="accelerationValue">0 m/s²</strong>
+      </div>
+
+    </div>
+
+  </section>
+
+  <section class="panel explanation">
+
+    <h2>🧠 Physics Behind the Journey</h2>
+
+    <br>
+
+    <p>
+      Distance is calculated using the motion equation:
+    </p>
+
+    <br>
+
+    <p>
+      <b>d = v × t</b>
+    </p>
+
+    <br>
+
+    <p>
+      Speed entered in km/h is converted into metres per second
+      before calculating the distance.
+    </p>
+
+    <br>
+
+    <p id="status">
+      Press "Start Journey" to begin the simulation.
+    </p>
+
+  </section>
+
+  <div class="footer">
+    Built during a journey 🚆 | Journey Physics
+  </div>
+
+</div>
+
+<script>
+
+let running = false;
+let time = 0;
+let distance = 0;
+let timer;
+
+function startSimulation() {
+
+  if (running) return;
+
+  running = true;
+
+  const speedInput =
+    Number(document.getElementById("speed").value);
+
+  const accelerationInput =
+    Number(document.getElementById("acceleration").value);
+
+  document.getElementById("status").innerText =
+    "🚀 Journey started — observing motion in real time.";
+
+  timer = setInterval(() => {
+
+    time += 1;
+
+    const speedMS = speedInput / 3.6;
+
+    distance = speedMS * time;
+
+    document.getElementById("speedValue").innerText =
+      speedInput.toFixed(1) + " km/h";
+
+    document.getElementById("distanceValue").innerText =
+      distance.toFixed(1) + " m";
+
+    document.getElementById("timeValue").innerText =
+      time + " s";
+
+    document.getElementById("accelerationValue").innerText =
+      accelerationInput.toFixed(1) + " m/s²";
+
+    let position = (time * 3) % 88 + 5;
+
+    document.getElementById("vehicle").style.left =
+      position + "%";
+
+  }, 1000);
+}
+
+function resetSimulation() {
+
+  clearInterval(timer);
+
+  running = false;
+  time = 0;
+  distance = 0;
+
+  document.getElementById("speedValue").innerText =
+    "0 km/h";
+
+  document.getElementById("distanceValue").innerText =
+    "0 m";
+
+  document.getElementById("timeValue").innerText =
+    "0 s";
+
+  document.getElementById("accelerationValue").innerText =
+    "0 m/s²";
+
+  document.getElementById("vehicle").style.left =
+    "5%";
+
+  document.getElementById("status").innerText =
+    'Press "Start Journey" to begin the simulation.';
+}
+
+</script>
+
+</body>
+</html>
